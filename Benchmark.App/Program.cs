@@ -77,162 +77,95 @@ namespace Benchmark.App
     [MarkdownExporterAttribute.GitHub]
     public class BenchmarkStream
     {
-        private readonly int[] smallRnd = new int[10_000];
-        private readonly int[] largeRnd = new int[10_000];
-        private const string smallDummy = "smalldummy";
-        private const string largeDummy = "largedummy";
+        private readonly int[] rndOffset = new int[10_000];
+        private const string dummy = "dummy";
+
+        [Params(1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000)]
+        public int MaxOffset { get; set; }
 
         public BenchmarkStream()
         {
             var random = new Random(243);
-            for (var i = 0; i < smallRnd.Length - 1; i++)
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                smallRnd[i] = random.Next(1_000_000);
+                rndOffset[i] = random.Next(MaxOffset);
             }
-            for (var i = 0; i < largeRnd.Length - 1; i++)
+
+            var data = new byte[MaxOffset+1+4];
+            random.NextBytes(data);
+            File.WriteAllBytes(dummy, data);
+        }
+
+        [Benchmark]
+        public void BytesFromArray()
+        {
+            var array = File.ReadAllBytes(dummy);
+
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                largeRnd[i] = random.Next(10_000_000);
+                var b = array[rndOffset[i]];
             }
         }
 
         [Benchmark]
-        public void LowBytesFromSmallArray()
+        public void IntFromArray()
         {
-            var array = File.ReadAllBytes(smallDummy);
+            var array = File.ReadAllBytes(dummy);
 
-            for (var i = 0; i < smallRnd.Length - 1; i++)
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                var b = array[smallRnd[i]];
-            }
-        }
-
-        [Benchmark]
-        public void LowBytesFromLargeArray()
-        {
-            var array = File.ReadAllBytes(largeDummy);
-
-            for (var i = 0; i < largeRnd.Length - 1; i++)
-            {
-                var b = array[largeRnd[i]];
-            }
-        }
-
-        [Benchmark]
-        public void HighBytesFromLargeArray()
-        {
-            var array = File.ReadAllBytes(largeDummy);
-
-            for (var i = 0; i < largeRnd.Length - 1; i++)
-            {
-                var b = array[largeRnd[i]];
-            }
-        }
-
-        [Benchmark]
-        public void LowBytesFromSmallStream()
-        {
-            using var stream = File.Open(smallDummy, FileMode.Open);
-            var dr = new DataReader(stream);
-
-            for (var i = 0; i < smallRnd.Length - 1; i++)
-            {
-                var b = dr.ReadByte(smallRnd[i]);
-            }
-        }
-
-        [Benchmark]
-        public void LowBytesFromLargeStream()
-        {
-            using var stream = File.Open(smallDummy, FileMode.Open);
-            var dr = new DataReader(stream);
-
-            for (var i = 0; i < smallRnd.Length - 1; i++)
-            {
-                var b = dr.ReadByte(smallRnd[i]);
-            }
-        }
-
-        [Benchmark]
-        public void HighBytesFromLargeStream()
-        {
-            using var stream = File.Open(largeDummy, FileMode.Open);
-            var dr = new DataReader(stream);
-
-            for (var i = 0; i < largeRnd.Length - 1; i++)
-            {
-                var b = dr.ReadByte(largeRnd[i]);
-            }
-        }
-
-        [Benchmark]
-        public void LowIntFromSmallArray()
-        {
-            var array = File.ReadAllBytes(smallDummy);
-
-            for (var i = 0; i < smallRnd.Length - 1; i++)
-            {
-                Span<byte> s = array.AsSpan(smallRnd[i], 4);
+                Span<byte> s = array.AsSpan(rndOffset[i], 4);
                 var integer = BitConverter.ToInt32(s);
             }
         }
 
         [Benchmark]
-        public void LowIntFromLargeArray()
+        public void BytesFromStream()
         {
-            var array = File.ReadAllBytes(largeDummy);
+            using var stream = File.Open(dummy, FileMode.Open);
 
-            for (var i = 0; i < largeRnd.Length - 1; i++)
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                Span<byte> s = array.AsSpan(largeRnd[i], 4);
+                stream.Seek(rndOffset[i], SeekOrigin.Begin);
+                var b = stream.ReadByte();
+            }
+        }
+
+        [Benchmark]
+        public void IntFromStream()
+        {
+            using var stream = File.Open(dummy, FileMode.Open);
+
+            for (var i = 0; i < rndOffset.Length - 1; i++)
+            {
+                Span<byte> s = stackalloc byte[4];
+                stream.Seek(rndOffset[i], SeekOrigin.Begin);
+                stream.Read(s);
                 var integer = BitConverter.ToInt32(s);
             }
         }
 
         [Benchmark]
-        public void HighIntFromLargeArray()
+        public void BytesFromDataReader()
         {
-            var array = File.ReadAllBytes(largeDummy);
+            using var stream = File.Open(dummy, FileMode.Open);
+            var dr = new DataReader(stream);
 
-            for (var i = 0; i < largeRnd.Length - 1; i++)
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                Span<byte> s = array.AsSpan(largeRnd[i], 4);
-                var integer = BitConverter.ToInt32(s);
+                var b = dr.ReadByte(rndOffset[i]);
             }
         }
 
         [Benchmark]
-        public void LowIntFromSmallStream()
+        public void IntFromDataReader()
         {
-            using var stream = File.Open(smallDummy, FileMode.Open);
+            using var stream = File.Open(dummy, FileMode.Open);
             var dr = new DataReader(stream);
 
-            for (var i = 0; i < smallRnd.Length - 1; i++)
+            for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                var integer = dr.ReadInt(smallRnd[i]);
-            }
-        }
-
-        [Benchmark]
-        public void LowIntFromLargeStream()
-        {
-            using var stream = File.Open(smallDummy, FileMode.Open);
-            var dr = new DataReader(stream);
-
-            for (var i = 0; i < smallRnd.Length - 1; i++)
-            {
-                var integer = dr.ReadInt(smallRnd[i]);
-            }
-        }
-
-        [Benchmark]
-        public void HighIntFromLargeStream()
-        {
-            using var stream = File.Open(largeDummy, FileMode.Open);
-            var dr = new DataReader(stream);
-
-            for (var i = 0; i < largeRnd.Length - 1; i++)
-            {
-                var integer = dr.ReadInt(largeRnd[i]);
+                var integer = dr.ReadInt(rndOffset[i]);
             }
         }
     }
