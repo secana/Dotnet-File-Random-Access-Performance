@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace Benchmark.App
 {
@@ -7,8 +8,8 @@ namespace Benchmark.App
     {
         private readonly Stream _stream;
         private byte[] _buff;
-        private int _maxRead;
         private const int _initialSize = 2 * 1024 * 1024; // Read 2MB initially from disk
+        private const int _maxStepSize = 1 * 1024 * 1024; // Read at most 1MB each time the buffer runs out of space
 
         public DataReader(Stream stream)
         {
@@ -27,45 +28,61 @@ namespace Benchmark.App
 
         }
 
-        public byte ReadByte(int position)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private int Resize(int offset, int readSize)
         {
-            if (position > _maxRead)
+            if(offset + readSize > _buff.Length - 1)
             {
-                if (position > _buff.Length - 1)
-                {
-                    Array.Resize(ref _buff, position + 1);
-                }
-                var bytesToRead = position - _maxRead + 1;
-                _stream.Seek(position, SeekOrigin.Begin);
-                if (_stream.Read(_buff, _maxRead, bytesToRead) == -1)
-                {
-                    throw new IndexOutOfRangeException();
-                }
-                _maxRead = position;
+                var resizeBy = offset - _buff.Length + 1;
+
+                resizeBy = resizeBy < _maxStepSize 
+                    ? _maxStepSize 
+                    : resizeBy;
+
+                resizeBy = resizeBy + _buff.Length > _stream.Length
+                    ? (int) _stream.Length - _buff.Length
+                    : resizeBy;
+
+
+                Array.Resize(ref _buff, _buff.Length + resizeBy);
+
+                return resizeBy;
             }
-
-
-            return _buff[position];
+            else
+            {
+                return 0;
+            }
         }
 
-        public int ReadInt(int position)
+        public byte ReadByte(int offset)
         {
-            if (position + sizeof(int) > _maxRead)
+            if (offset > _buff.Length)
             {
-                if (position + sizeof(int) > _buff.Length - 1)
-                {
-                    Array.Resize(ref _buff, position + sizeof(int) + 1);
-                }
-                var bytesToRead = position + sizeof(int) - _maxRead + 1;
-                _stream.Seek(position, SeekOrigin.Begin);
-                if (_stream.Read(_buff, _maxRead, bytesToRead) == -1)
+                var resizedBy = Resize(offset, sizeof(byte));
+                _stream.Seek(offset, SeekOrigin.Begin);
+                if (_stream.Read(_buff, _buff.Length, resizedBy) == -1)
                 {
                     throw new IndexOutOfRangeException();
                 }
-                _maxRead = position + sizeof(int);
             }
 
-            Span<byte> s = _buff.AsSpan(position, 4);
+
+            return _buff[offset];
+        }
+
+        public int ReadInt(int offset)
+        {
+            if (offset + sizeof(int) > _buff.Length)
+            {
+                var resized = Resize(offset, sizeof(int));
+                _stream.Seek(offset, SeekOrigin.Begin);
+                if (_stream.Read(_buff, _buff.Length, resized) == -1)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+            }
+
+            Span<byte> s = _buff.AsSpan(offset, 4);
             return BitConverter.ToInt32(s);
         }
     }

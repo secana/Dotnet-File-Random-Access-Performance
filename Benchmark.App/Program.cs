@@ -18,7 +18,7 @@ namespace Benchmark.App
 
         public BenchmarkStream()
         {
-            var random = new Random(243);
+            var random = new Random(DateTime.Now.Millisecond);
             for (var i = 0; i < rndOffset.Length - 1; i++)
             {
                 rndOffset[i] = random.Next(MaxOffset);
