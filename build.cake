@@ -2,7 +2,15 @@ var target		= Argument("target", "Default");
 var slnDir		= System.IO.Directory.GetCurrentDirectory();
 var projDir		= System.IO.Path.Combine(slnDir, "Benchmark.App");
 
+
+Task("Restore")
+	.Does(() =>
+	{
+		DotNetCoreRestore("./Benchmark.App");	  
+	});
+
 Task("Build")
+	.IsDependentOn("Restore")
 	.Does(() =>
 	{
 		var solution = GetFiles("./*.sln").ElementAt(0);

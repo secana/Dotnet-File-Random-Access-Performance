@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Pipelines;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -168,6 +169,13 @@ namespace Benchmark.App
                 var integer = dr.ReadInt(rndOffset[i]);
             }
         }
+
+        //[Benchmark]
+        //public void BytesFromPipeline()
+        //{
+        //    var pipe = new Pipe();
+            
+        //}
     }
 
     class Program
