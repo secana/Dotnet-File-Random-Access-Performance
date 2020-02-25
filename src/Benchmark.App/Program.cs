@@ -11,8 +11,8 @@ namespace Benchmark.App
     [MarkdownExporterAttribute.GitHub]
     public class BenchmarkStream
     {
-        private readonly int[] rndOffset = new int[10_000];
-        private const string dummy = "dummy";
+        private readonly int[] _rndOffset = new int[10_000];
+        private const string Dummy = "dummy";
 
         [Params(1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000)]
         public int MaxOffset { get; set; }
@@ -20,9 +20,9 @@ namespace Benchmark.App
         public BenchmarkStream()
         {
             var random = new Random(DateTime.Now.Millisecond);
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                rndOffset[i] = random.Next(MaxOffset);
+                _rndOffset[i] = random.Next(MaxOffset);
             }
         }
 
@@ -32,34 +32,34 @@ namespace Benchmark.App
             var random = new Random(123);
             var data = new byte[MaxOffset + 1 + 4];
             random.NextBytes(data);
-            File.WriteAllBytes(dummy, data);
+            File.WriteAllBytes(Dummy, data);
         }
 
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            File.Delete(dummy);
+            File.Delete(Dummy);
         }
 
         [Benchmark]
         public void ByteFromArray()
         {
-            var array = File.ReadAllBytes(dummy);
+            var array = File.ReadAllBytes(Dummy);
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                var b = array[rndOffset[i]];
+                var b = array[_rndOffset[i]];
             }
         }
 
         [Benchmark]
         public void IntFromArray()
         {
-            var array = File.ReadAllBytes(dummy);
+            var array = File.ReadAllBytes(Dummy);
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                Span<byte> s = array.AsSpan(rndOffset[i], 4);
+                var s = array.AsSpan(_rndOffset[i], 4);
                 var integer = BitConverter.ToInt32(s);
             }
         }
@@ -67,11 +67,11 @@ namespace Benchmark.App
         [Benchmark]
         public void ByteFromStream()
         {
-            using var stream = File.Open(dummy, FileMode.Open);
+            using var stream = File.Open(Dummy, FileMode.Open);
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                stream.Seek(rndOffset[i], SeekOrigin.Begin);
+                stream.Seek(_rndOffset[i], SeekOrigin.Begin);
                 var b = stream.ReadByte();
             }
         }
@@ -79,52 +79,38 @@ namespace Benchmark.App
         [Benchmark]
         public void IntFromStream()
         {
-            using var stream = File.Open(dummy, FileMode.Open);
+            using var stream = File.Open(Dummy, FileMode.Open);
             Span<byte> s = stackalloc byte[4];
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                stream.Seek(rndOffset[i], SeekOrigin.Begin);
+                stream.Seek(_rndOffset[i], SeekOrigin.Begin);
                 stream.Read(s);
                 var integer = BitConverter.ToInt32(s);
             }
         }
 
         [Benchmark]
-        public void IntFromStreamPrimitive()
-        {
-            using var stream = File.Open(dummy, FileMode.Open);
-            Span<byte> s = stackalloc byte[4];
-
-            for (var i = 0; i < rndOffset.Length - 1; i++)
-            {
-                stream.Seek(rndOffset[i], SeekOrigin.Begin);
-                stream.Read(s);
-                var integer = BinaryPrimitives.ReadInt32LittleEndian(s);
-            }
-        }
-
-        [Benchmark]
         public void ByteFromDataReader()
         {
-            using var stream = File.Open(dummy, FileMode.Open);
+            using var stream = File.Open(Dummy, FileMode.Open);
             var dr = new DataReader(stream);
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                var b = dr.ReadByte(rndOffset[i]);
+                var b = dr.ReadByte(_rndOffset[i]);
             }
         }
 
         [Benchmark]
         public void IntFromDataReader()
         {
-            using var stream = File.Open(dummy, FileMode.Open);
+            using var stream = File.Open(Dummy, FileMode.Open);
             var dr = new DataReader(stream);
 
-            for (var i = 0; i < rndOffset.Length - 1; i++)
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                var integer = dr.ReadInt(rndOffset[i]);
+                var integer = dr.ReadInt(_rndOffset[i]);
             }
         }
     }
