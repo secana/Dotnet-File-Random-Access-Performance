@@ -1,12 +1,12 @@
 var target		= Argument("target", "Default");
 var slnDir		= System.IO.Directory.GetCurrentDirectory();
-var projDir		= System.IO.Path.Combine(slnDir, "Benchmark.App");
+var projDir		= System.IO.Path.Combine(slnDir, "src", "Benchmark.App");
 
 
 Task("Restore")
 	.Does(() =>
 	{
-		DotNetCoreRestore("./Benchmark.App");	  
+		DotNetCoreRestore(projDir);	  
 	});
 
 Task("Build")
@@ -32,7 +32,7 @@ Task("Run-Benchmark")
 			Configuration = "Release"
 		};
 
-		DotNetCoreRun("./Benchmark.App", "--args", settings);
+		DotNetCoreRun(projDir, "--args", settings);
 	});
 
 Task("Default")

@@ -82,7 +82,7 @@ namespace Benchmark.App
                 }
             }
 
-            Span<byte> s = _buff.AsSpan(offset, 4);
+            var s = _buff.AsSpan(offset, 4);
             return BitConverter.ToInt32(s);
         }
     }

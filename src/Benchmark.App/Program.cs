@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -79,13 +80,27 @@ namespace Benchmark.App
         public void IntFromStream()
         {
             using var stream = File.Open(dummy, FileMode.Open);
+            Span<byte> s = stackalloc byte[4];
 
             for (var i = 0; i < rndOffset.Length - 1; i++)
             {
-                Span<byte> s = stackalloc byte[4];
                 stream.Seek(rndOffset[i], SeekOrigin.Begin);
                 stream.Read(s);
                 var integer = BitConverter.ToInt32(s);
+            }
+        }
+
+        [Benchmark]
+        public void IntFromStreamPrimitive()
+        {
+            using var stream = File.Open(dummy, FileMode.Open);
+            Span<byte> s = stackalloc byte[4];
+
+            for (var i = 0; i < rndOffset.Length - 1; i++)
+            {
+                stream.Seek(rndOffset[i], SeekOrigin.Begin);
+                stream.Read(s);
+                var integer = BinaryPrimitives.ReadInt32LittleEndian(s);
             }
         }
 
