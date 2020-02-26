@@ -110,7 +110,7 @@ namespace Benchmark.App
 
             for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
-                var integer = dr.ReadInt(_rndOffset[i]);
+                var integer = dr.ReadUInt(_rndOffset[i]);
             }
         }
     }

@@ -8,22 +8,22 @@ namespace Benchmark.App
     {
         private readonly Stream _stream;
         private byte[] _buff;
-        private const int _initialSize = 2 * 1024 * 1024; // Read 2MB initially from disk
-        private const int _maxStepSize = 1 * 1024 * 1024; // Read at most 1MB each time the buffer runs out of space
+        public int InitialSize { get; set; } = 2 * 1024 * 1024; // Read 2MB initially from disk
+        public int MaxStepSize { get; set; } = 1 * 1024 * 1024; // Read at most 1MB each time the buffer runs out of space
 
         public DataReader(Stream stream)
         {
             _stream = stream;
 
-            if (stream.Length > _initialSize)
+            if (stream.Length > InitialSize)
             {
-                _buff = new byte[_initialSize];
+                _buff = new byte[InitialSize];
             }
             else
             {
                 _buff = new byte[stream.Length];
 
-                stream.Read(_buff, 0, (int)stream.Length - 1);
+                stream.Read(_buff, 0, (int)stream.Length);
             }
 
         }
@@ -35,8 +35,8 @@ namespace Benchmark.App
             {
                 var resizeBy = offset - _buff.Length + 1;
 
-                resizeBy = resizeBy < _maxStepSize 
-                    ? _maxStepSize 
+                resizeBy = resizeBy < MaxStepSize 
+                    ? MaxStepSize 
                     : resizeBy;
 
                 resizeBy = resizeBy + _buff.Length > _stream.Length
@@ -70,7 +70,7 @@ namespace Benchmark.App
             return _buff[offset];
         }
 
-        public int ReadInt(int offset)
+        public uint ReadUInt(int offset)
         {
             if (offset + sizeof(int) > _buff.Length)
             {
@@ -83,7 +83,7 @@ namespace Benchmark.App
             }
 
             var s = _buff.AsSpan(offset, 4);
-            return BitConverter.ToInt32(s);
+            return BitConverter.ToUInt32(s);
         }
     }
 }
