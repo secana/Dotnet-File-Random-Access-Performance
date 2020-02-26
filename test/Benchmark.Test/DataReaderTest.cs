@@ -30,11 +30,7 @@ namespace Benchmark.Test
         [InlineData(11, 0xcc)]
         public void ReadByte_GivenAnOffset_ReturnsCorrectByte(int offset, byte expected)
         {
-            var dr = new DataReader(_stream)
-            {
-                InitialSize = 1, 
-                MaxStepSize = 2
-            };
+            var dr = new DataReader(_stream, 1, 1);
 
             Assert.Equal(expected, dr.ReadByte(offset));
         }
@@ -44,28 +40,29 @@ namespace Benchmark.Test
         [InlineData(5, 0x99887766)]
         public void ReadInt_GivenAnOffset_ReturnsCorrectInt(int offset, uint expected)
         {
-            var dr = new DataReader(_stream)
-            {
-                InitialSize = 1,
-                MaxStepSize = 2
-            };
+            var dr = new DataReader(_stream, 4, 4);
 
             Assert.Equal(expected, dr.ReadUInt(offset));
         }
 
         [Theory]
         [InlineData(-1)]
-        [InlineData(9)]
-        [InlineData(11)]
         public void ReadInt_GivenAnTooLargeOffset_ThrowsArgumentOutOfRangeException(int offset)
         {
-            var dr = new DataReader(_stream)
-            {
-                InitialSize = 1,
-                MaxStepSize = 2
-            };
+            var dr = new DataReader(_stream, 1, 1);
 
             Assert.Throws<ArgumentOutOfRangeException>(() => dr.ReadUInt(offset));
+        }
+
+        [Theory]
+        [InlineData(9)]
+        [InlineData(11)]
+        [InlineData(12)]
+        public void ReadInt_GivenAnTooLargeOffset_ThrowsArgumentException(int offset)
+        {
+            var dr = new DataReader(_stream, 1, 1);
+
+            Assert.Throws<ArgumentException>(() => dr.ReadUInt(offset));
         }
     }
 }
