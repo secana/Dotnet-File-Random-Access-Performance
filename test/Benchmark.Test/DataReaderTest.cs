@@ -25,44 +25,46 @@ namespace Benchmark.Test
         });
 
         [Theory]
-        [InlineData(0, 0x11)]
-        [InlineData(5, 0x66)]
-        [InlineData(11, 0xcc)]
-        public void ReadByte_GivenAnOffset_ReturnsCorrectByte(int offset, byte expected)
+        [InlineData(0, 0x11, 1, 1)]
+        [InlineData(5, 0x66, 1, 1)]
+        [InlineData(11, 0xcc, 1, 1)]
+        [InlineData(0, 0x11, 5, 4)]
+        [InlineData(5, 0x66, 5, 4)]
+        [InlineData(11, 0xcc, 5, 4)]
+        [InlineData(0, 0x11, 100, 50)]
+        [InlineData(5, 0x66, 100, 50)]
+        [InlineData(11, 0xcc, 100, 50)]
+        public void ReadByte_GivenAnOffset_ReturnsCorrectByte(int offset, byte expected, int initBytesToRead, int bytesToRead)
         {
-            var dr = new DataReader(_stream, 1, 1);
+            var dr = new MyBufferedStream(_stream, initBytesToRead, bytesToRead);
 
             Assert.Equal(expected, dr.ReadByte(offset));
         }
 
         [Theory]
-        [InlineData(0, 0x44332211)]
-        [InlineData(5, 0x99887766)]
-        public void ReadInt_GivenAnOffset_ReturnsCorrectInt(int offset, uint expected)
+        [InlineData(0, 0x44332211, 1, 1)]
+        [InlineData(5, 0x99887766, 1, 1)]
+        [InlineData(0, 0x44332211, 5, 4)]
+        [InlineData(5, 0x99887766, 5, 4)]
+        [InlineData(0, 0x44332211, 100, 50)]
+        [InlineData(5, 0x99887766, 100, 50)]
+        public void ReadInt_GivenAnOffset_ReturnsCorrectInt(int offset, uint expected, int initBytesToRead, int bytesToRead)
         {
-            var dr = new DataReader(_stream, 4, 4);
+            var dr = new MyBufferedStream(_stream, initBytesToRead, bytesToRead);
 
             Assert.Equal(expected, dr.ReadUInt(offset));
         }
 
         [Theory]
         [InlineData(-1)]
-        public void ReadInt_GivenAnTooLargeOffset_ThrowsArgumentOutOfRangeException(int offset)
-        {
-            var dr = new DataReader(_stream, 1, 1);
-
-            Assert.Throws<ArgumentOutOfRangeException>(() => dr.ReadUInt(offset));
-        }
-
-        [Theory]
         [InlineData(9)]
         [InlineData(11)]
         [InlineData(12)]
-        public void ReadInt_GivenAnTooLargeOffset_ThrowsArgumentException(int offset)
+        public void ReadInt_GivenAnTooLargeOffset_ThrowsArgumentOutOfRangeException(int offset)
         {
-            var dr = new DataReader(_stream, 1, 1);
+            var dr = new MyBufferedStream(_stream, 1, 1);
 
-            Assert.Throws<ArgumentException>(() => dr.ReadUInt(offset));
+            Assert.Throws<ArgumentOutOfRangeException>(() => dr.ReadUInt(offset));
         }
     }
 }
