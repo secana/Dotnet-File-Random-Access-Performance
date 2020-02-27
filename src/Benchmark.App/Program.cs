@@ -150,11 +150,40 @@ namespace Benchmark.App
         }
 
         [Benchmark]
-        public void ByteFromBufferedStreamBinaryReader()
+        public void ByteFromBufferedStreamWithInitSize()
         {
             using var stream = File.Open(Dummy, FileMode.Open);
-            using var bs = new BufferedStream(stream);
-            using var br = new BinaryReader(bs);
+            using var bs = new BufferedStream(stream, (int) stream.Length);
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                stream.Seek(_rndOffset[i], SeekOrigin.Begin);
+                var b = (byte)stream.ReadByte();
+                var x = b;
+            }
+        }
+
+        [Benchmark]
+        public void IntFromBufferedStreamWithInitSize()
+        {
+            using var stream = File.Open(Dummy, FileMode.Open);
+            var bs = new BufferedStream(stream, (int) stream.Length);
+            Span<byte> s = stackalloc byte[4];
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                stream.Seek(_rndOffset[i], SeekOrigin.Begin);
+                stream.Read(s);
+                var integer = BitConverter.ToInt32(s);
+                var x = integer;
+            }
+        }
+
+        [Benchmark]
+        public void ByteFromStreamBinaryReader()
+        {
+            using var stream = File.Open(Dummy, FileMode.Open);
+            using var br = new BinaryReader(stream);
 
             for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
@@ -165,11 +194,10 @@ namespace Benchmark.App
         }
 
         [Benchmark]
-        public void IntFromBufferedStreamBinaryReader()
+        public void IntFromStreamBinaryReader()
         {
             using var stream = File.Open(Dummy, FileMode.Open);
-            using var bs = new BufferedStream(stream);
-            using var br = new BinaryReader(bs);
+            using var br = new BinaryReader(stream);
 
             for (var i = 0; i < _rndOffset.Length - 1; i++)
             {
