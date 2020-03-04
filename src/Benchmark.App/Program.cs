@@ -8,6 +8,8 @@ namespace Benchmark.App
 
     [MemoryDiagnoser]
     [MarkdownExporterAttribute.GitHub]
+    [CsvExporter]
+    [CsvMeasurementsExporter]
     public class BenchmarkStream
     {
         private readonly int[] _rndOffset = new int[1_000];
