@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.MemoryMappedFiles;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -205,6 +206,64 @@ namespace Benchmark.App
             {
                 stream.Seek(_rndOffset[i], SeekOrigin.Begin);
                 var integer = br.ReadUInt32();
+                var x = integer;
+            }
+        }
+
+
+        [Benchmark]
+        public void ByteFromViewStream()
+        {
+            using var mmf = MemoryMappedFile.CreateFromFile(Dummy, FileMode.Open);
+            using var vs = mmf.CreateViewStream();
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                vs.Seek(_rndOffset[i], SeekOrigin.Begin);
+                var b = (byte)vs.ReadByte();
+                var x = b;
+            }
+        }
+
+        [Benchmark]
+        public void IntFromViewStream()
+        {
+            using var mmf = MemoryMappedFile.CreateFromFile(Dummy, FileMode.Open);
+            using var vs = mmf.CreateViewStream();
+            Span<byte> s = stackalloc byte[4];
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                vs.Seek(_rndOffset[i], SeekOrigin.Begin);
+                vs.Read(s);
+                var integer = BitConverter.ToInt32(s);
+                var x = integer;
+            }
+        }
+
+        [Benchmark]
+        public void ByteFromViewAccessor()
+        {
+            using var mmf = MemoryMappedFile.CreateFromFile(Dummy, FileMode.Open);
+            using var va = mmf.CreateViewAccessor();
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                var b = va.ReadByte(_rndOffset[i]);
+                var x = b;
+            }
+        }
+
+        [Benchmark]
+        public void IntFromViewAccessor()
+        {
+            using var mmf = MemoryMappedFile.CreateFromFile(Dummy, FileMode.Open);
+            using var va = mmf.CreateViewAccessor();
+            Span<byte> s = stackalloc byte[4];
+
+            for (var i = 0; i < _rndOffset.Length - 1; i++)
+            {
+                var integer = va.ReadInt32(_rndOffset[i]);
                 var x = integer;
             }
         }
